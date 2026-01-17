@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Shopping List</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .input-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .input-section input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    .input-section button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #28a745;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+    .input-section button:hover {
+      background-color: #218838;
+    }
+    .list-section {
+      margin-top: 20px;
+    }
+    .shop-title {
+      font-weight: bold;
+      margin-top: 20px;
+      color: #555;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 8px;
+      background-color: #f1f1f1;
+      transition: background 0.2s;
+    }
+    li.bought {
+      text-decoration: line-through;
+      color: #888;
+      background-color: #e0e0e0;
+    }
+    .buttons {
+      display: flex;
+      gap: 5px;
+    }
+    .buttons button {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .buttons .buy-btn {
+      background-color: #007bff;
+      color: white;
+    }
+    .buttons .buy-btn:hover {
+      background-color: #0069d9;
+    }
+    .buttons .remove-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+    .buttons .remove-btn:hover {
+      background-color: #c82333;
+    }
+    @media(max-width: 500px){
+      .input-section { flex-direction: column; }
+      .input-section button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Family Shopping List</h1>
+  <div class="container">
+    <div class="input-section">
+      <input type="text" id="itemName" placeholder="Item name">
+      <input type="text" id="shopName" placeholder="Shop (optional)">
+      <button onclick="addItem()">Add</button>
+    </div>
+    
+    <div class="list-section" id="listSection">
+      <!-- Items will appear here -->
+    </div>
+  </div>
+
+  <script>
+    let items = [];
+
+    function addItem() {
+      const itemName = document.getElementById('itemName').value.trim();
+      const shopName = document.getElementById('shopName').value.trim();
+      if (!itemName) return alert('Please enter an item name.');
+
+      const item = {
+        id: Date.now(),
+        name: itemName,
+        shop: shopName || 'Other',
+        bought: false
+      };
+      items.push(item);
+      document.getElementById('itemName').value = '';
+      document.getElementById('shopName').value = '';
+      renderList();
+    }
+
+    function toggleBought(id) {
+      items = items.map(item => item.id === id ? {...item, bought: !item.bought} : item);
+      renderList();
+    }
+
+    function removeItem(id) {
+      items = items.filter(item => item.id !== id);
+      renderList();
+    }
+
+    function renderList() {
+      const listSection = document.getElementById('listSection');
+      listSection.innerHTML = '';
+
+      // Group items by shop
+      const grouped = items.reduce((acc, item) => {
+        if (!acc[item.shop]) acc[item.shop] = [];
+        acc[item.shop].push(item);
+        return acc;
+      }, {});
+
+      // Sort shops alphabetically
+      const sortedShops = Object.keys(grouped).sort();
+
+      sortedShops.forEach(shop => {
+        const shopDiv = document.createElement('div');
+        shopDiv.innerHTML = `<div class="shop-title">${shop}</div>`;
+        const ul = document.createElement('ul');
+
+        grouped[shop].forEach(item => {
+          const li = document.createElement('li');
+          li.className = item.bought ? 'bought' : '';
+          li.innerHTML = `
+            <span>${item.name}</span>
+            <div class="buttons">
+              <button class="buy-btn" onclick="toggleBought(${item.id})">
+                ${item.bought ? 'Undo' : 'Bought'}
+              </button>
+              <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+            </div>
+          `;
+          ul.appendChild(li);
+        });
+
+        shopDiv.appendChild(ul);
+        listSection.appendChild(shopDiv);
+      });
+    }
+  </script>
+</body>
+</html>
