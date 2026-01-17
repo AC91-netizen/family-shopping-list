@@ -115,54 +115,89 @@
       <input type="text" id="shopName" placeholder="Shop (optional)">
       <button onclick="addItem()">Add</button>
     </div>
-    
     <div class="list-section" id="listSection">
       <!-- Items will appear here -->
     </div>
   </div>
 
-  <script>
-    let items = [];
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6EE_rzVWKJKjANhRu2u0vGRlIVBIDotA",
+      authDomain: "family-shopping-list-7a786.firebaseapp.com",
+      projectId: "family-shopping-list-7a786",
+      storageBucket: "family-shopping-list-7a786.firebasestorage.app",
+      messagingSenderId: "797124453394",
+      appId: "1:797124453394:web:7c1ba5b3ec2204408624cb",
+      databaseURL: "https://family-shopping-list-7a786-default-rtdb.firebaseio.com"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'items');
+
+    // Listen for realtime updates
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const items = Object.values(data);
+      renderList(items);
+    });
+
+    // Add item to Firebase
     function addItem() {
       const itemName = document.getElementById('itemName').value.trim();
       const shopName = document.getElementById('shopName').value.trim();
       if (!itemName) return alert('Please enter an item name.');
 
-      const item = {
+      const newItem = {
         id: Date.now(),
         name: itemName,
         shop: shopName || 'Other',
         bought: false
       };
-      items.push(item);
+
+      push(dbRef, newItem);
       document.getElementById('itemName').value = '';
       document.getElementById('shopName').value = '';
-      renderList();
     }
 
-    function toggleBought(id) {
-      items = items.map(item => item.id === id ? {...item, bought: !item.bought} : item);
-      renderList();
+    // Toggle bought status
+    function toggleBought(itemId) {
+      const q = query(dbRef, orderByChild('id'), equalTo(itemId));
+      onValue(q, (snapshot) => {
+        snapshot.forEach(child => {
+          const current = child.val();
+          update(child.ref, { bought: !current.bought });
+        });
+      }, { onlyOnce: true });
     }
 
-    function removeItem(id) {
-      items = items.filter(item => item.id !== id);
-      renderList();
+    // Remove item
+    function removeItem(itemId) {
+      const q = query(dbRef, orderByChild('id'), equalTo(itemId));
+      onValue(q, (snapshot) => {
+        snapshot.forEach(child => {
+          remove(child.ref);
+        });
+      }, { onlyOnce: true });
     }
 
-    function renderList() {
+    // Render list grouped by shop
+    function renderList(items) {
       const listSection = document.getElementById('listSection');
       listSection.innerHTML = '';
 
-      // Group items by shop
       const grouped = items.reduce((acc, item) => {
         if (!acc[item.shop]) acc[item.shop] = [];
         acc[item.shop].push(item);
         return acc;
       }, {});
 
-      // Sort shops alphabetically
       const sortedShops = Object.keys(grouped).sort();
 
       sortedShops.forEach(shop => {
