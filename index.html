@@ -32,106 +32,87 @@
   <div class="input-section">
     <input type="text" id="itemName" placeholder="Item name">
     <input type="text" id="shopName" placeholder="Shop (optional)">
-    <button id="addBtn">Add</button>
+    <button onclick="addItem()">Add</button>
   </div>
   <div class="list-section" id="listSection"></div>
 </div>
 
-<script type="module">
-// Import Firebase App and Database modules
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+<!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-// Your Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyC6EE_rzVWKJKjANhRu2u0vGRlIVBIDotA",
-  authDomain: "family-shopping-list-7a786.firebaseapp.com",
-  projectId: "family-shopping-list-7a786",
-  storageBucket: "family-shopping-list-7a786.appspot.com",
-  messagingSenderId: "797124453394",
-  appId: "1:797124453394:web:7c1ba5b3ec2204408624cb",
-  databaseURL: "https://family-shopping-list-7a786-default-rtdb.firebaseio.com"
-};
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyC6EE_rzVWKJKjANhRu2u0vGRlIVBIDotA",
+    authDomain: "family-shopping-list-7a786.firebaseapp.com",
+    databaseURL: "https://family-shopping-list-7a786-default-rtdb.firebaseio.com",
+    projectId: "family-shopping-list-7a786",
+    storageBucket: "family-shopping-list-7a786.appspot.com",
+    messagingSenderId: "797124453394",
+    appId: "1:797124453394:web:7c1ba5b3ec2204408624cb"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.database();
+  var itemsRef = db.ref('items');
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const itemsRef = ref(db, 'items');
+  function addItem() {
+    var name = document.getElementById('itemName').value.trim();
+    var shop = document.getElementById('shopName').value.trim() || "Other";
+    if(!name) { alert("Please enter item name"); return; }
 
-const listSection = document.getElementById('listSection');
-const addBtn = document.getElementById('addBtn');
-const itemInput = document.getElementById('itemName');
-const shopInput = document.getElementById('shopName');
-
-// Add new item
-addBtn.addEventListener('click', async () => {
-  const name = itemInput.value.trim();
-  const shop = shopInput.value.trim() || "Other";
-  if (!name) return alert("Please enter an item name.");
-
-  const newItem = { id: Date.now(), name, shop, bought: false };
-  try {
-    await push(itemsRef, newItem);
-    itemInput.value = '';
-    shopInput.value = '';
-  } catch(e) {
-    console.error("Error adding item:", e);
+    var newItem = { id: Date.now(), name: name, shop: shop, bought: false };
+    itemsRef.push(newItem);
+    document.getElementById('itemName').value = '';
+    document.getElementById('shopName').value = '';
   }
-});
 
-// Listen for real-time updates
-onValue(itemsRef, (snapshot) => {
-  const data = snapshot.val() || {};
-  const items = Object.values(data);
-  renderList(items, data);
-});
-
-// Render shopping list grouped by shop
-function renderList(items, rawData) {
-  listSection.innerHTML = '';
-  const grouped = items.reduce((acc, item) => {
-    if (!acc[item.shop]) acc[item.shop] = [];
-    acc[item.shop].push(item);
-    return acc;
-  }, {});
-
-  const sortedShops = Object.keys(grouped).sort();
-
-  sortedShops.forEach(shop => {
-    const shopDiv = document.createElement('div');
-    shopDiv.innerHTML = `<div class="shop-title">${shop}</div>`;
-    const ul = document.createElement('ul');
-
-    grouped[shop].forEach(item => {
-      const li = document.createElement('li');
-      li.className = item.bought ? 'bought' : '';
-      li.innerHTML = `
-        <span>${item.name}</span>
-        <div class="buttons">
-          <button class="buy-btn">${item.bought ? 'Undo' : 'Bought'}</button>
-          <button class="remove-btn">Remove</button>
-        </div>
-      `;
-      const [buyBtn, removeBtn] = li.querySelectorAll('button');
-      const itemKey = Object.keys(rawData).find(k => rawData[k].id === item.id);
-
-      buyBtn.addEventListener('click', async () => {
-        if (!itemKey) return;
-        await update(ref(db, 'items/' + itemKey), { bought: !item.bought });
-      });
-
-      removeBtn.addEventListener('click', async () => {
-        if (!itemKey) return;
-        await remove(ref(db, 'items/' + itemKey));
-      });
-
-      ul.appendChild(li);
-    });
-
-    shopDiv.appendChild(ul);
-    listSection.appendChild(shopDiv);
+  itemsRef.on('value', function(snapshot){
+    var data = snapshot.val() || {};
+    renderList(data);
   });
-}
+
+  function renderList(data){
+    var listSection = document.getElementById('listSection');
+    listSection.innerHTML = '';
+
+    var grouped = {};
+    for(var key in data){
+      var item = data[key];
+      if(!grouped[item.shop]) grouped[item.shop] = [];
+      item.key = key;
+      grouped[item.shop].push(item);
+    }
+
+    Object.keys(grouped).sort().forEach(shop => {
+      var shopDiv = document.createElement('div');
+      shopDiv.innerHTML = '<div class="shop-title">'+shop+'</div>';
+      var ul = document.createElement('ul');
+
+      grouped[shop].forEach(item => {
+        var li = document.createElement('li');
+        li.className = item.bought ? 'bought' : '';
+        li.innerHTML = '<span>'+item.name+'</span>' +
+          '<div class="buttons">' +
+          '<button class="buy-btn">'+(item.bought?'Undo':'Bought')+'</button>' +
+          '<button class="remove-btn">Remove</button>' +
+          '</div>';
+        ul.appendChild(li);
+
+        li.querySelector('.buy-btn').onclick = function(){
+          itemsRef.child(item.key).update({bought: !item.bought});
+        };
+        li.querySelector('.remove-btn').onclick = function(){
+          itemsRef.child(item.key).remove();
+        };
+      });
+
+      shopDiv.appendChild(ul);
+      listSection.appendChild(shopDiv);
+    });
+  }
 </script>
 </body>
 </html>
