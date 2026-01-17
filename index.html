@@ -1,136 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Family Shopping List</title>
-  <style>
-    body { font-family: Arial,sans-serif; background:#f9f9f9; margin:0; padding:20px; }
-    h1 { text-align:center; color:#333; }
-    .container { max-width:600px; margin:0 auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
-    .input-section { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
-    .input-section input { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:16px; }
-    .input-section button { padding:10px 20px; border:none; background-color:#28a745; color:white; border-radius:8px; cursor:pointer; font-size:16px; transition:0.2s; }
-    .input-section button:hover { background-color:#218838; }
-    .list-section { margin-top:20px; }
-    .shop-title { font-weight:bold; margin-top:20px; color:#555; }
-    ul { list-style:none; padding-left:0; }
-    li { display:flex; justify-content:space-between; align-items:center; padding:10px; margin-bottom:5px; border-radius:8px; background:#f1f1f1; }
-    li.bought { text-decoration:line-through; color:#888; background:#e0e0e0; }
-    .buttons { display:flex; gap:5px; }
-    .buttons button { padding:5px 10px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
-    .buttons .buy-btn { background:#007bff; color:white; }
-    .buttons .buy-btn:hover { background:#0069d9; }
-    .buttons .remove-btn { background:#dc3545; color:white; }
-    .buttons .remove-btn:hover { background:#c82333; }
-    @media(max-width:500px){ .input-section { flex-direction:column; } .input-section button{width:100%;} }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Shopping List</title>
+<style>
+  body { font-family: Arial,sans-serif; background:#f9f9f9; margin:0; padding:20px; }
+  h1 { text-align:center; color:#333; }
+  .container { max-width:600px; margin:0 auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+  .input-section { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+  .input-section input { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:16px; }
+  .input-section button { padding:10px 20px; border:none; background-color:#28a745; color:white; border-radius:8px; cursor:pointer; font-size:16px; transition:0.2s; }
+  .input-section button:hover { background-color:#218838; }
+  .list-section { margin-top:20px; }
+  .shop-title { font-weight:bold; margin-top:20px; color:#555; }
+  ul { list-style:none; padding-left:0; }
+  li { display:flex; justify-content:space-between; align-items:center; padding:10px; margin-bottom:5px; border-radius:8px; background:#f1f1f1; }
+  li.bought { text-decoration:line-through; color:#888; background:#e0e0e0; }
+  .buttons { display:flex; gap:5px; }
+  .buttons button { padding:5px 10px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
+  .buttons .buy-btn { background:#007bff; color:white; }
+  .buttons .buy-btn:hover { background:#0069d9; }
+  .buttons .remove-btn { background:#dc3545; color:white; }
+  .buttons .remove-btn:hover { background:#c82333; }
+  @media(max-width:500px){ .input-section { flex-direction:column; } .input-section button{width:100%;} }
+</style>
 </head>
 <body>
-  <h1>Family Shopping List</h1>
-  <div class="container">
-    <div class="input-section">
-      <input type="text" id="itemName" placeholder="Item name">
-      <input type="text" id="shopName" placeholder="Shop (optional)">
-      <button id="addBtn">Add</button>
-    </div>
-    <div class="list-section" id="listSection"></div>
+<h1>Family Shopping List</h1>
+<div class="container">
+  <div class="input-section">
+    <input type="text" id="itemName" placeholder="Item name">
+    <input type="text" id="shopName" placeholder="Shop (optional)">
+    <button id="addBtn">Add</button>
   </div>
+  <div class="list-section" id="listSection"></div>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue, get, child, update, remove, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+<script type="module">
+// Import Firebase App and Database modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC6EE_rzVWKJKjANhRu2u0vGRlIVBIDotA",
-      authDomain: "family-shopping-list-7a786.firebaseapp.com",
-      projectId: "family-shopping-list-7a786",
-      storageBucket: "family-shopping-list-7a786.appspot.com",
-      messagingSenderId: "797124453394",
-      appId: "1:797124453394:web:7c1ba5b3ec2204408624cb",
-      databaseURL: "https://family-shopping-list-7a786-default-rtdb.firebaseio.com"
-    };
+// Your Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyC6EE_rzVWKJKjANhRu2u0vGRlIVBIDotA",
+  authDomain: "family-shopping-list-7a786.firebaseapp.com",
+  projectId: "family-shopping-list-7a786",
+  storageBucket: "family-shopping-list-7a786.appspot.com",
+  messagingSenderId: "797124453394",
+  appId: "1:797124453394:web:7c1ba5b3ec2204408624cb",
+  databaseURL: "https://family-shopping-list-7a786-default-rtdb.firebaseio.com"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const itemsRef = ref(db, 'items');
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const itemsRef = ref(db, 'items');
 
-    const listSection = document.getElementById('listSection');
-    const addBtn = document.getElementById('addBtn');
+const listSection = document.getElementById('listSection');
+const addBtn = document.getElementById('addBtn');
+const itemInput = document.getElementById('itemName');
+const shopInput = document.getElementById('shopName');
 
-    addBtn.addEventListener('click', addItem);
+// Add new item
+addBtn.addEventListener('click', async () => {
+  const name = itemInput.value.trim();
+  const shop = shopInput.value.trim() || "Other";
+  if (!name) return alert("Please enter an item name.");
 
-    // Listen for real-time updates
-    onValue(itemsRef, snapshot => {
-      const data = snapshot.val() || {};
-      const items = Object.values(data);
-      renderList(items);
+  const newItem = { id: Date.now(), name, shop, bought: false };
+  try {
+    await push(itemsRef, newItem);
+    itemInput.value = '';
+    shopInput.value = '';
+  } catch(e) {
+    console.error("Error adding item:", e);
+  }
+});
+
+// Listen for real-time updates
+onValue(itemsRef, (snapshot) => {
+  const data = snapshot.val() || {};
+  const items = Object.values(data);
+  renderList(items, data);
+});
+
+// Render shopping list grouped by shop
+function renderList(items, rawData) {
+  listSection.innerHTML = '';
+  const grouped = items.reduce((acc, item) => {
+    if (!acc[item.shop]) acc[item.shop] = [];
+    acc[item.shop].push(item);
+    return acc;
+  }, {});
+
+  const sortedShops = Object.keys(grouped).sort();
+
+  sortedShops.forEach(shop => {
+    const shopDiv = document.createElement('div');
+    shopDiv.innerHTML = `<div class="shop-title">${shop}</div>`;
+    const ul = document.createElement('ul');
+
+    grouped[shop].forEach(item => {
+      const li = document.createElement('li');
+      li.className = item.bought ? 'bought' : '';
+      li.innerHTML = `
+        <span>${item.name}</span>
+        <div class="buttons">
+          <button class="buy-btn">${item.bought ? 'Undo' : 'Bought'}</button>
+          <button class="remove-btn">Remove</button>
+        </div>
+      `;
+      const [buyBtn, removeBtn] = li.querySelectorAll('button');
+      const itemKey = Object.keys(rawData).find(k => rawData[k].id === item.id);
+
+      buyBtn.addEventListener('click', async () => {
+        if (!itemKey) return;
+        await update(ref(db, 'items/' + itemKey), { bought: !item.bought });
+      });
+
+      removeBtn.addEventListener('click', async () => {
+        if (!itemKey) return;
+        await remove(ref(db, 'items/' + itemKey));
+      });
+
+      ul.appendChild(li);
     });
 
-    function addItem() {
-      const nameInput = document.getElementById('itemName');
-      const shopInput = document.getElementById('shopName');
-      const name = nameInput.value.trim();
-      const shop = shopInput.value.trim() || "Other";
-      if (!name) return alert("Please enter an item name.");
-
-      const newItem = { id: Date.now(), name, shop, bought: false };
-      push(itemsRef, newItem)
-        .then(() => console.log("Item added:", newItem))
-        .catch(err => console.error("Error adding item:", err));
-
-      nameInput.value = '';
-      shopInput.value = '';
-    }
-
-    async function toggleBought(itemId) {
-      const q = query(itemsRef, orderByChild('id'), equalTo(itemId));
-      const snapshot = await get(q);
-      snapshot.forEach(childSnap => {
-        const current = childSnap.val();
-        update(childSnap.ref, { bought: !current.bought });
-      });
-    }
-
-    async function removeItem(itemId) {
-      const q = query(itemsRef, orderByChild('id'), equalTo(itemId));
-      const snapshot = await get(q);
-      snapshot.forEach(childSnap => remove(childSnap.ref));
-    }
-
-    function renderList(items) {
-      listSection.innerHTML = '';
-      const grouped = items.reduce((acc, item) => {
-        if (!acc[item.shop]) acc[item.shop] = [];
-        acc[item.shop].push(item);
-        return acc;
-      }, {});
-
-      const sortedShops = Object.keys(grouped).sort();
-      sortedShops.forEach(shop => {
-        const shopDiv = document.createElement('div');
-        shopDiv.innerHTML = `<div class="shop-title">${shop}</div>`;
-        const ul = document.createElement('ul');
-
-        grouped[shop].forEach(item => {
-          const li = document.createElement('li');
-          li.className = item.bought ? 'bought' : '';
-          li.innerHTML = `
-            <span>${item.name}</span>
-            <div class="buttons">
-              <button class="buy-btn" onclick="toggleBought(${item.id})">
-                ${item.bought ? 'Undo' : 'Bought'}
-              </button>
-              <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
-            </div>
-          `;
-          ul.appendChild(li);
-        });
-
-        shopDiv.appendChild(ul);
-        listSection.appendChild(shopDiv);
-      });
-    }
-  </script>
+    shopDiv.appendChild(ul);
+    listSection.appendChild(shopDiv);
+  });
+}
+</script>
 </body>
 </html>
