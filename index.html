@@ -4,115 +4,206 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Family Shopping List</title>
+
 <style>
-  body { font-family: Arial,sans-serif; background:#f9f9f9; margin:0; padding:20px; }
-  h1 { text-align:center; color:#333; }
-  .container { max-width:600px; margin:0 auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
-  .input-section { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
-  .input-section input { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:16px; }
-  .input-section button { padding:10px 20px; border:none; background-color:#28a745; color:white; border-radius:8px; cursor:pointer; font-size:16px; transition:0.2s; }
-  .input-section button:hover { background-color:#218838; }
-  .list-section { margin-top:20px; }
-  .shop-title { font-weight:bold; margin-top:20px; color:#555; }
-  ul { list-style:none; padding-left:0; }
-  li { display:flex; justify-content:space-between; align-items:center; padding:10px; margin-bottom:5px; border-radius:8px; background:#f1f1f1; }
-  li.bought { text-decoration:line-through; color:#888; background:#e0e0e0; }
-  .buttons { display:flex; gap:5px; }
-  .buttons button { padding:5px 10px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
-  .buttons .buy-btn { background:#007bff; color:white; }
-  .buttons .buy-btn:hover { background:#0069d9; }
-  .buttons .remove-btn { background:#dc3545; color:white; }
-  .buttons .remove-btn:hover { background:#c82333; }
-  @media(max-width:500px){ .input-section { flex-direction:column; } .input-section button{width:100%;} }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  input {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+
+  button {
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .add-btn {
+    background: #28a745;
+    color: white;
+  }
+
+  .shop-title {
+    font-weight: bold;
+    margin-top: 20px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  li {
+    background: #eee;
+    padding: 10px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  li.bought {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+
+  .item-buttons button {
+    margin-left: 5px;
+  }
+
+  .buy-btn {
+    background: #007bff;
+    color: white;
+  }
+
+  .remove-btn {
+    background: #dc3545;
+    color: white;
+  }
 </style>
 </head>
+
 <body>
+
 <h1>Family Shopping List</h1>
+
 <div class="container">
-  <div class="input-section">
-    <input type="text" id="itemName" placeholder="Item name">
-    <input type="text" id="shopName" placeholder="Shop (optional)">
-    <button onclick="addItem()">Add</button>
+  <div class="input-row">
+    <input id="itemName" placeholder="Item name">
+    <input id="shopName" placeholder="Shop (optional)">
+    <button class="add-btn" onclick="addItem()">Add</button>
   </div>
-  <div class="list-section" id="listSection"></div>
+
+  <div id="list"></div>
 </div>
 
-<!-- Firebase App (the core Firebase SDK) -->
+<!-- FIREBASE (COMPAT – REQUIRED FOR GITHUB PAGES) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-  // Your web app's Firebase configuration
-  var firebaseConfig = {
+  // Firebase config
+  const firebaseConfig = {
     apiKey: "AIzaSyC6EE_rzVWKJKjANhRu2u0vGRlIVBIDotA",
     authDomain: "family-shopping-list-7a786.firebaseapp.com",
-    databaseURL: "https://family-shopping-list-7a786-default-rtdb.firebaseio.com",
+    databaseURL: "https://family-shopping-list-7a786-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "family-shopping-list-7a786",
     storageBucket: "family-shopping-list-7a786.appspot.com",
     messagingSenderId: "797124453394",
     appId: "1:797124453394:web:7c1ba5b3ec2204408624cb"
   };
-  // Initialize Firebase
+
+  // Init Firebase
   firebase.initializeApp(firebaseConfig);
-  var db = firebase.database();
-  var itemsRef = db.ref('items');
+  const db = firebase.database();
+  const itemsRef = db.ref("items");
 
+  // Add item
   function addItem() {
-    var name = document.getElementById('itemName').value.trim();
-    var shop = document.getElementById('shopName').value.trim() || "Other";
-    if(!name) { alert("Please enter item name"); return; }
+    const name = document.getElementById("itemName").value.trim();
+    const shop = document.getElementById("shopName").value.trim() || "Other";
 
-    var newItem = { id: Date.now(), name: name, shop: shop, bought: false };
-    itemsRef.push(newItem);
-    document.getElementById('itemName').value = '';
-    document.getElementById('shopName').value = '';
+    if (!name) {
+      alert("Enter an item name");
+      return;
+    }
+
+    itemsRef.push({
+      name: name,
+      shop: shop,
+      bought: false
+    });
+
+    document.getElementById("itemName").value = "";
+    document.getElementById("shopName").value = "";
   }
 
-  itemsRef.on('value', function(snapshot){
-    var data = snapshot.val() || {};
+  // Listen for updates
+  itemsRef.on("value", snapshot => {
+    const data = snapshot.val() || {};
     renderList(data);
   });
 
-  function renderList(data){
-    var listSection = document.getElementById('listSection');
-    listSection.innerHTML = '';
+  function renderList(data) {
+    const listDiv = document.getElementById("list");
+    listDiv.innerHTML = "";
 
-    var grouped = {};
-    for(var key in data){
-      var item = data[key];
-      if(!grouped[item.shop]) grouped[item.shop] = [];
+    const grouped = {};
+
+    for (const key in data) {
+      const item = data[key];
       item.key = key;
+      if (!grouped[item.shop]) grouped[item.shop] = [];
       grouped[item.shop].push(item);
     }
 
     Object.keys(grouped).sort().forEach(shop => {
-      var shopDiv = document.createElement('div');
-      shopDiv.innerHTML = '<div class="shop-title">'+shop+'</div>';
-      var ul = document.createElement('ul');
+      const shopTitle = document.createElement("div");
+      shopTitle.className = "shop-title";
+      shopTitle.textContent = shop;
+      listDiv.appendChild(shopTitle);
+
+      const ul = document.createElement("ul");
 
       grouped[shop].forEach(item => {
-        var li = document.createElement('li');
-        li.className = item.bought ? 'bought' : '';
-        li.innerHTML = '<span>'+item.name+'</span>' +
-          '<div class="buttons">' +
-          '<button class="buy-btn">'+(item.bought?'Undo':'Bought')+'</button>' +
-          '<button class="remove-btn">Remove</button>' +
-          '</div>';
-        ul.appendChild(li);
+        const li = document.createElement("li");
+        if (item.bought) li.classList.add("bought");
 
-        li.querySelector('.buy-btn').onclick = function(){
-          itemsRef.child(item.key).update({bought: !item.bought});
+        li.innerHTML = `
+          <span>${item.name}</span>
+          <div class="item-buttons">
+            <button class="buy-btn">${item.bought ? "Undo" : "Bought"}</button>
+            <button class="remove-btn">Remove</button>
+          </div>
+        `;
+
+        li.querySelector(".buy-btn").onclick = () => {
+          itemsRef.child(item.key).update({ bought: !item.bought });
         };
-        li.querySelector('.remove-btn').onclick = function(){
+
+        li.querySelector(".remove-btn").onclick = () => {
           itemsRef.child(item.key).remove();
         };
+
+        ul.appendChild(li);
       });
 
-      shopDiv.appendChild(ul);
-      listSection.appendChild(shopDiv);
+      listDiv.appendChild(ul);
     });
   }
 </script>
+
 </body>
 </html>
